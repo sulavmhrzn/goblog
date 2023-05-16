@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 type config struct {
@@ -27,10 +25,8 @@ func main() {
 	flag.IntVar(&app.cfg.port, "port", 4000, "Port number to serve")
 	flag.Parse()
 
-	router := httprouter.New()
-
 	app.infolog.Println("server running on port: ", app.cfg.port)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.port), router)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.port), app.router())
 	if err != nil {
 		app.errorlog.Fatal(err)
 	}
