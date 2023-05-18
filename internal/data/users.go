@@ -10,6 +10,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var (
+	ErrDuplicateEmail = errors.New("dupliicate email")
+	ErrNoRows         = errors.New("invalid email or password")
+)
+
 type User struct {
 	ID        int      `json:"id"`
 	Email     string   `json:"email"`
@@ -66,8 +71,6 @@ type UserModel struct {
 	DB *sql.DB
 }
 
-var ErrDuplicateEmail = errors.New("dupliicate email")
-
 func (m UserModel) Insert(u *User) error {
 	query := `INSERT INTO users (email, password, activated) VALUES ($1, $2, $3)`
 	args := []interface{}{u.Email, u.Password.hash, u.Activated}
@@ -83,4 +86,22 @@ func (m UserModel) Insert(u *User) error {
 		}
 	}
 	return nil
+}
+
+func (m UserModel) GetByEmail(email string) (*User, error) {
+	query := `SELECT id, email, password, activated FROM users
+	WHERE email = $1`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var user User
+	err := m.DB.QueryRowContext(ctx, query, email).Scan(&user.ID, &user.Email, &user.Password.hash, &user.Activated)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrNoRows
+		default:
+			return nil, err
+		}
+	}
+	return &user, nil
 }
