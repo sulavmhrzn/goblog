@@ -11,6 +11,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/sulavmhrzn/internal/data"
 )
 
 type config struct {
@@ -20,25 +21,31 @@ type config struct {
 type application struct {
 	infolog  *log.Logger
 	errorlog *log.Logger
-	cfg      config
+	config   config
+	models   data.Models
 }
 
 func main() {
+	var cfg config
+	flag.IntVar(&cfg.port, "port", 4000, "Port number to serve")
+	flag.StringVar(&cfg.dsn, "dsn", "postgres://goblog:goblogpw@localhost/goblog", "Database DSN")
+	flag.Parse()
+
+	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	db, err := OpenDB(&cfg)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
 	app := application{
 		infolog:  log.New(os.Stdout, "INFO\t", log.Ltime|log.Lshortfile),
 		errorlog: log.New(os.Stdout, "ERROR\t", log.Ltime|log.Lshortfile),
-	}
-	flag.IntVar(&app.cfg.port, "port", 4000, "Port number to serve")
-	flag.StringVar(&app.cfg.dsn, "dsn", "postgres://goblog:goblogpw@localhost/goblog", "Database DSN")
-	flag.Parse()
-	// TODO:
-	_, err := OpenDB(&app.cfg)
-	if err != nil {
-		app.errorlog.Fatal(err.Error())
+		config:   cfg,
+		models:   data.NewModels(db),
 	}
 
-	app.infolog.Println("server running on port: ", app.cfg.port)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", app.cfg.port), app.router())
+	app.infolog.Println("Database connection successfull")
+	app.infolog.Println("server running on port: ", cfg.port)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.port), app.router())
 	if err != nil {
 		app.errorlog.Fatal(err)
 	}

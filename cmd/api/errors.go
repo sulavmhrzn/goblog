@@ -1,6 +1,8 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, message interface{}, status int) {
 	data := envelope{"error": message}

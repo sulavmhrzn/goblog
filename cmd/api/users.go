@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/sulavmhrzn/internal/data"
@@ -34,5 +35,17 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		app.failedValidationCheckErrorResponse(w, r, v.Error)
 		return
 	}
-	app.writeJSON(w, r, envelope{"data": input}, http.StatusOK)
+
+	err = app.models.UserModel.Insert(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrDuplicateEmail):
+			app.badRequestErrorResponse(w, r, err.Error())
+			return
+		default:
+			app.internalServerErrorResponse(w, r, err.Error())
+			return
+		}
+	}
+	app.writeJSON(w, r, envelope{"data": user}, http.StatusOK)
 }
