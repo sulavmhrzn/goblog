@@ -12,5 +12,7 @@ func (app *application) router() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/api/v1/users/", app.createUserHandler)
 
 	router.HandlerFunc(http.MethodPost, "/api/v1/tokens/authentication", app.createAuthenticationTokenHandler)
+	router.HandlerFunc(http.MethodPost, "/api/v1/tokens/activate", app.createActivationTokenHandler)
+	router.HandlerFunc(http.MethodPost, "/api/v1/tokens/activated", app.activateUserHandler)
 	return app.authenticate(router)
 }

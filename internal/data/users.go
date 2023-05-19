@@ -146,3 +146,23 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 	}
 	return &user, nil
 }
+
+func (m UserModel) Update(user *User) error {
+	query := `
+	UPDATE users
+	SET email=$1, password = $2, activated=$3
+	WHERE id=$4`
+	args := []interface{}{user.Email, user.Password.hash, user.Activated, user.ID}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_, err := m.DB.ExecContext(ctx, query, args...)
+	if err != nil {
+		switch {
+		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
+			return ErrDuplicateEmail
+		default:
+			return err
+		}
+	}
+	return nil
+}

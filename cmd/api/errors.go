@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"runtime/debug"
 )
 
 func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, message interface{}, status int) {
@@ -11,6 +12,7 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, me
 
 func (app *application) internalServerErrorResponse(w http.ResponseWriter, r *http.Request, message string) {
 	msg := "internal server error"
+	app.errorlog.Println(string(debug.Stack()))
 	app.errorlog.Println(message)
 	app.errorResponse(w, r, msg, http.StatusInternalServerError)
 }
