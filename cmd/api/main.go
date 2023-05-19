@@ -28,7 +28,7 @@ type application struct {
 func main() {
 	var cfg config
 	flag.IntVar(&cfg.port, "port", 4000, "Port number to serve")
-	flag.StringVar(&cfg.dsn, "dsn", "postgres://goblog:goblogpw@localhost/goblog", "Database DSN")
+	flag.StringVar(&cfg.dsn, "dsn", "", "Database DSN")
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
