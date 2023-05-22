@@ -89,3 +89,20 @@ func (m BlogModel) Get(id int) (*Blog, error) {
 	}
 	return &blog, nil
 }
+
+func (m BlogModel) Delete(id int) (int64, error) {
+	query := `
+	DELETE FROM blogs WHERE id = $1`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	result, err := m.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return 0, err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
+}

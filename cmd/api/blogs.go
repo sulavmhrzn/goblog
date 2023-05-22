@@ -75,3 +75,21 @@ func (app *application) getBlogHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	app.writeJSON(w, r, envelope{"blog": blog}, http.StatusOK)
 }
+
+func (app *application) deleteBlogHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readInt(r)
+	if id < 0 || err != nil {
+		app.badRequestErrorResponse(w, r, err.Error())
+		return
+	}
+	result, err := app.models.BlogModel.Delete(id)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err.Error())
+		return
+	}
+	if result == 0 {
+		app.notFoundErrorResponse(w, r)
+		return
+	}
+	app.writeJSON(w, r, envelope{}, http.StatusNoContent)
+}

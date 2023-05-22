@@ -18,5 +18,7 @@ func (app *application) router() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/api/v1/blogs", app.requireActivatedUser(app.createBlogHandler))
 	router.HandlerFunc(http.MethodGet, "/api/v1/blogs", app.listBlogsHandler)
 	router.HandlerFunc(http.MethodGet, "/api/v1/blogs/:id", app.getBlogHandler)
+	router.HandlerFunc(http.MethodDelete, "/api/v1/blogs/:id", app.deleteBlogHandler)
+
 	return app.authenticate(router)
 }
