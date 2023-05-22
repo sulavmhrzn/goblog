@@ -11,7 +11,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/sulavmhrzn/internal/data"
+	"github.com/sulavmhrzn/goblog/internal/data"
 )
 
 type config struct {

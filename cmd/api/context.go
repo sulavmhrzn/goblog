@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/sulavmhrzn/internal/data"
+	"github.com/sulavmhrzn/goblog/internal/data"
 )
 
 type contextKey string

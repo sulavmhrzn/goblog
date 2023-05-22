@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/sulavmhrzn/internal/data"
-	"github.com/sulavmhrzn/internal/validator"
+	"github.com/sulavmhrzn/goblog/internal/data"
+	"github.com/sulavmhrzn/goblog/internal/validator"
 )
 
 func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request) {

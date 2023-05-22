@@ -1,4 +1,4 @@
-module github.com/sulavmhrzn
+module github.com/sulavmhrzn/goblog
 
 go 1.20
 

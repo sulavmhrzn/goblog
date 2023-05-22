@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sulavmhrzn/internal/data"
-	"github.com/sulavmhrzn/internal/validator"
+	"github.com/sulavmhrzn/goblog/internal/data"
+	"github.com/sulavmhrzn/goblog/internal/validator"
 )
 
 func (app *application) authenticate(next http.Handler) http.Handler {
