@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -53,4 +54,24 @@ func (app *application) listBlogsHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	app.writeJSON(w, r, envelope{"blogs": blogs}, http.StatusOK)
+}
+
+func (app *application) getBlogHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readInt(r)
+	if id < 0 || err != nil {
+		app.badRequestErrorResponse(w, r, err.Error())
+		return
+	}
+	blog, err := app.models.BlogModel.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRows):
+			app.notFoundErrorResponse(w, r)
+			return
+		default:
+			app.internalServerErrorResponse(w, r, err.Error())
+			return
+		}
+	}
+	app.writeJSON(w, r, envelope{"blog": blog}, http.StatusOK)
 }

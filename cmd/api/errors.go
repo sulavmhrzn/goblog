@@ -45,3 +45,8 @@ func (app *application) inactiveAccountErrorResponse(w http.ResponseWriter, r *h
 	message := "your user account must be activated to access this resource"
 	app.errorResponse(w, r, message, http.StatusForbidden)
 }
+
+func (app *application) notFoundErrorResponse(w http.ResponseWriter, r *http.Request) {
+	message := "not found"
+	app.errorResponse(w, r, message, http.StatusNotFound)
+}

@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/sulavmhrzn/internal/validator"
@@ -70,4 +71,21 @@ func (m BlogModel) List() ([]Blog, error) {
 		return nil, err
 	}
 	return blogs, nil
+}
+
+func (m BlogModel) Get(id int) (*Blog, error) {
+	query := `SELECT id, title, content, created_at, user_id FROM blogs WHERE id = $1`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var blog Blog
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(&blog.ID, &blog.Title, &blog.Content, &blog.CreatedAt, &blog.UserID)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrNoRows
+		default:
+			return nil, err
+		}
+	}
+	return &blog, nil
 }

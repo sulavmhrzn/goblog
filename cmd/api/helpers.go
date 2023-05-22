@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 type envelope map[string]interface{}
@@ -44,4 +47,14 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 		}
 	}
 	return nil
+}
+
+func (app *application) readInt(r *http.Request) (int, error) {
+	params := httprouter.ParamsFromContext(r.Context())
+	value := params.ByName("id")
+	id, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
