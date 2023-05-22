@@ -9,7 +9,7 @@ import (
 )
 
 type Blog struct {
-	ID        int       `json:"-"`
+	ID        int       `json:"id"`
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
@@ -17,7 +17,7 @@ type Blog struct {
 	Slug      string    `json:"slug"`
 }
 
-func ValidateBlog(v *validator.Validator, blog Blog) {
+func ValidateBlog(v *validator.Validator, blog *Blog) {
 	v.Check(blog.Title != "", "title", "must be provided")
 	v.Check(len(blog.Title) >= 2, "title", "must be greater than 2 characters")
 	v.Check(blog.Content != "", "content", "must be provided")
@@ -29,15 +29,16 @@ type BlogModel struct {
 	DB *sql.DB
 }
 
-func (m BlogModel) Insert(b Blog) error {
+func (m BlogModel) Insert(b *Blog) error {
 	query := `
 	INSERT INTO blogs (title, content, created_at, user_id, slug)
-	VALUES ($1, $2, $3, $4, $5)`
+	VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	args := []interface{}{b.Title, b.Content, b.CreatedAt, b.UserID, b.Slug}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := m.DB.ExecContext(ctx, query, args...)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&b.ID)
+
 	if err != nil {
 		return err
 	}
@@ -46,7 +47,7 @@ func (m BlogModel) Insert(b Blog) error {
 
 func (m BlogModel) List() ([]Blog, error) {
 	query := `
-	SELECT title, content, created_at, slug FROM blogs`
+	SELECT id, title, content, created_at, slug FROM blogs`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -59,7 +60,7 @@ func (m BlogModel) List() ([]Blog, error) {
 
 	for rows.Next() {
 		var b Blog
-		err := rows.Scan(&b.Title, &b.Content, &b.CreatedAt, &b.Slug)
+		err := rows.Scan(&b.ID, &b.Title, &b.Content, &b.CreatedAt, &b.Slug)
 		if err != nil {
 			return nil, err
 		}

@@ -24,7 +24,7 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 	v := validator.New()
 
 	user := app.contextGetUser(r)
-	blog := data.Blog{
+	blog := &data.Blog{
 		Title:     input.Title,
 		Content:   input.Content,
 		CreatedAt: time.Now(),
