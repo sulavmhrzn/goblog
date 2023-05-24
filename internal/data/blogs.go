@@ -74,11 +74,11 @@ func (m BlogModel) List() ([]Blog, error) {
 }
 
 func (m BlogModel) Get(id int) (*Blog, error) {
-	query := `SELECT id, title, content, created_at, user_id FROM blogs WHERE id = $1`
+	query := `SELECT id, title, content, created_at, user_id, slug FROM blogs WHERE id = $1`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	var blog Blog
-	err := m.DB.QueryRowContext(ctx, query, id).Scan(&blog.ID, &blog.Title, &blog.Content, &blog.CreatedAt, &blog.UserID)
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(&blog.ID, &blog.Title, &blog.Content, &blog.CreatedAt, &blog.UserID, &blog.Slug)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -105,4 +105,23 @@ func (m BlogModel) Delete(id int) (int64, error) {
 	}
 
 	return rows, nil
+}
+
+func (m BlogModel) Update(b *Blog) (*Blog, error) {
+	query := `
+	UPDATE blogs SET
+	title = $1, 
+	content = $2,
+	slug = $3 
+	WHERE id = $4 
+	RETURNING id, title, content, slug`
+	args := []interface{}{b.Title, b.Content, b.Slug, b.ID}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&b.ID, &b.Title, &b.Content, &b.Slug)
+	if err != nil {
+		return nil, err
+	}
+	return b, err
 }

@@ -93,3 +93,55 @@ func (app *application) deleteBlogHandler(w http.ResponseWriter, r *http.Request
 	}
 	app.writeJSON(w, r, envelope{}, http.StatusNoContent)
 }
+
+func (app *application) updateBlogHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readInt(r)
+	if id < 0 || err != nil {
+		app.badRequestErrorResponse(w, r, err.Error())
+		return
+	}
+
+	blog, err := app.models.BlogModel.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRows):
+			app.notFoundErrorResponse(w, r)
+			return
+		default:
+			app.internalServerErrorResponse(w, r, err.Error())
+			return
+		}
+	}
+
+	var input struct {
+		Title   string `json:"title"`
+		Content string `json:"content"`
+	}
+	err = app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestErrorResponse(w, r, err.Error())
+		return
+	}
+	if input.Title != "" {
+		blog.Title = input.Title
+	}
+	if input.Content != "" {
+		blog.Content = input.Content
+	}
+	v := validator.New()
+
+	data.ValidateBlog(v, blog)
+	if !v.IsValid() {
+		app.failedValidationCheckErrorResponse(w, r, v.Error)
+		return
+	}
+	blog.Slug = slug.Make(blog.Title)
+
+	b, err := app.models.BlogModel.Update(blog)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err.Error())
+		return
+	}
+	app.writeJSON(w, r, envelope{"blog": b}, http.StatusCreated)
+
+}
