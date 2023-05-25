@@ -166,3 +166,57 @@ func (m UserModel) Update(user *User) error {
 	}
 	return nil
 }
+
+type UserDashboardDetails struct {
+	User  User
+	Blogs []Blog
+}
+
+func (m UserModel) DashboardDetails(userID int) (*UserDashboardDetails, error) {
+	blogQuery := `
+	SELECT
+	blogs.id as blog_id, blogs.title as blog_title, blogs.content as blog_content, 
+	blogs.created_at as blog_created_at, blogs.user_id as  blog_user_id, blogs.slug as blog_slug
+	FROM blogs
+	WHERE blogs.user_id = $1
+	`
+	userQuery := `
+	SELECT id, email, activated FROM users WHERE id = $1`
+	var dashboard UserDashboardDetails
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, userQuery, userID).Scan(&dashboard.User.ID, &dashboard.User.Email, &dashboard.User.Activated)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := m.DB.QueryContext(ctx, blogQuery, userID)
+	if err != nil {
+		return nil, err
+	}
+	var blogs []Blog
+	for rows.Next() {
+		var blog Blog
+		err := rows.Scan(
+			&blog.ID,
+			&blog.Title,
+			&blog.Content,
+			&blog.CreatedAt,
+			&blog.UserID,
+			&blog.Slug,
+		)
+		if err != nil {
+			return nil, err
+		}
+		blogs = append(blogs, blog)
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	dashboard.Blogs = blogs
+	return &dashboard, nil
+
+}
