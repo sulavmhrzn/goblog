@@ -82,6 +82,23 @@ func (app *application) deleteBlogHandler(w http.ResponseWriter, r *http.Request
 		app.badRequestErrorResponse(w, r, err.Error())
 		return
 	}
+	currentUser := app.contextGetUser(r)
+	blog, err := app.models.BlogModel.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNoRows):
+			app.notFoundErrorResponse(w, r)
+			return
+		default:
+			app.internalServerErrorResponse(w, r, err.Error())
+			return
+		}
+	}
+	if currentUser.ID != blog.UserID {
+		app.unauthorizedErrorResponse(w, r)
+		return
+	}
+
 	result, err := app.models.BlogModel.Delete(id)
 	if err != nil {
 		app.internalServerErrorResponse(w, r, err.Error())
@@ -112,7 +129,11 @@ func (app *application) updateBlogHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 	}
-
+	currentUser := app.contextGetUser(r)
+	if currentUser.ID != blog.UserID {
+		app.unauthorizedErrorResponse(w, r)
+		return
+	}
 	var input struct {
 		Title   string `json:"title"`
 		Content string `json:"content"`

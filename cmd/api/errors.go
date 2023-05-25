@@ -50,3 +50,8 @@ func (app *application) notFoundErrorResponse(w http.ResponseWriter, r *http.Req
 	message := "not found"
 	app.errorResponse(w, r, message, http.StatusNotFound)
 }
+
+func (app *application) unauthorizedErrorResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you are not authorized to perform this action"
+	app.errorResponse(w, r, message, http.StatusUnauthorized)
+}
