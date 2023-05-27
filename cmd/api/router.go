@@ -23,5 +23,5 @@ func (app *application) router() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/api/v1/users/dashboard", app.requireAuthenticatedUser(app.dashboardHandler))
 
-	return app.authenticate(router)
+	return app.perClientRateLimiter(app.authenticate(router))
 }

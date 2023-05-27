@@ -2,11 +2,15 @@ package main
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/sulavmhrzn/goblog/internal/data"
 	"github.com/sulavmhrzn/goblog/internal/validator"
+	"golang.org/x/time/rate"
 )
 
 func (app *application) authenticate(next http.Handler) http.Handler {
@@ -70,4 +74,46 @@ func (app *application) requireActivatedUser(next http.HandlerFunc) http.Handler
 		next.ServeHTTP(w, r)
 	})
 	return app.requireAuthenticatedUser(fn)
+}
+
+func (app *application) perClientRateLimiter(next http.Handler) http.Handler {
+	type client struct {
+		limiter  *rate.Limiter
+		lastSeen time.Time
+	}
+	var (
+		mu      sync.Mutex
+		clients = make(map[string]*client)
+	)
+	go func() {
+		for {
+			time.Sleep(time.Minute)
+			mu.Lock()
+			for ip, client := range clients {
+				if time.Since(client.lastSeen) > 3*time.Minute {
+					delete(clients, ip)
+				}
+			}
+			mu.Unlock()
+		}
+	}()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			app.internalServerErrorResponse(w, r, err.Error())
+			return
+		}
+		mu.Lock()
+		if _, found := clients[ip]; !found {
+			clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
+		}
+		clients[ip].lastSeen = time.Now()
+		if !clients[ip].limiter.Allow() {
+			mu.Unlock()
+			app.rateLimitErrorResponse(w, r)
+			return
+		}
+		mu.Unlock()
+		next.ServeHTTP(w, r)
+	})
 }

@@ -55,3 +55,8 @@ func (app *application) unauthorizedErrorResponse(w http.ResponseWriter, r *http
 	message := "you are not authorized to perform this action"
 	app.errorResponse(w, r, message, http.StatusUnauthorized)
 }
+
+func (app *application) rateLimitErrorResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you have been rate limited"
+	app.errorResponse(w, r, message, http.StatusTooManyRequests)
+}

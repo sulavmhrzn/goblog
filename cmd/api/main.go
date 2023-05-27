@@ -45,7 +45,13 @@ func main() {
 
 	app.infolog.Println("Database connection successfull")
 	app.infolog.Println("server running on port: ", cfg.port)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.port), app.router())
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.port),
+		Handler:      app.router(),
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	err = srv.ListenAndServe()
 	if err != nil {
 		app.errorlog.Fatal(err)
 	}
