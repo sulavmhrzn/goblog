@@ -51,7 +51,7 @@ func main() {
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/localhost.pem", "./tls/localhost-key.pem")
 	if err != nil {
 		app.errorlog.Fatal(err)
 	}
