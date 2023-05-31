@@ -79,11 +79,11 @@ type UserModel struct {
 }
 
 func (m UserModel) Insert(u *User) error {
-	query := `INSERT INTO users (email, password, activated) VALUES ($1, $2, $3)`
+	query := `INSERT INTO users (email, password, activated) VALUES ($1, $2, $3) RETURNING id`
 	args := []interface{}{u.Email, u.Password.hash, u.Activated}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	_, err := m.DB.ExecContext(ctx, query, args...)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&u.ID)
 	if err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:

@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/sulavmhrzn/goblog/internal/data"
 	"github.com/sulavmhrzn/goblog/internal/validator"
@@ -46,6 +48,17 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 			app.internalServerErrorResponse(w, r, err.Error())
 			return
 		}
+	}
+	token, err := app.models.TokenModel.New(user.ID, 24*time.Hour, data.ScopeActivation)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err.Error())
+		return
+	}
+	body := fmt.Sprintf("Your activation token is: %s", token.Plaintext)
+	err = app.mailer.Send(user.Email, "Welcome to Goblog!", body)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err.Error())
+		return
 	}
 	app.writeJSON(w, r, envelope{"data": user}, http.StatusOK)
 }
