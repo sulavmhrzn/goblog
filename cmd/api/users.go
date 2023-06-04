@@ -54,11 +54,13 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		app.internalServerErrorResponse(w, r, err.Error())
 		return
 	}
-	body := fmt.Sprintf("Your activation token is: %s", token.Plaintext)
-	err = app.mailer.Send(user.Email, "Welcome to Goblog!", body)
-	if err != nil {
-		app.internalServerErrorResponse(w, r, err.Error())
-		return
-	}
+	app.background(func() {
+		body := fmt.Sprintf("Your activation token is: %s", token.Plaintext)
+		err = app.mailer.Send(user.Email, "Welcome to Goblog!", body)
+		if err != nil {
+			app.internalServerErrorResponse(w, r, err.Error())
+			return
+		}
+	})
 	app.writeJSON(w, r, envelope{"data": user}, http.StatusOK)
 }

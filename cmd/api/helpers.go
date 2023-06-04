@@ -58,3 +58,14 @@ func (app *application) readInt(r *http.Request) (int, error) {
 	}
 	return id, nil
 }
+
+func (app *application) background(fn func()) {
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				app.errorlog.Println(err)
+			}
+		}()
+		fn()
+	}()
+}
